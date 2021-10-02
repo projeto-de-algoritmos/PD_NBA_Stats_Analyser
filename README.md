@@ -42,4 +42,4 @@ Quaisquer outras informações sobre seu projeto podem ser descritas abaixo.
 
 
 
-
+Dataset: https://www.kaggle.com/nathanlauga/nba-games
