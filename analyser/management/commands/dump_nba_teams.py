@@ -9,7 +9,7 @@ from analyser.utils import lower_column_names, get_teams_data
 class Command(BaseCommand):
     help = 'Build graph from wikipedia page links using Kevin Bacon as starting node'
 
-    def handle(self):
+    def handle(self, *args, **options):
         teams_csv_filename = 'teams.csv'
         teams_df = pd.read_csv(teams_csv_filename)
         teams_df = lower_column_names(teams_df)
