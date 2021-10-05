@@ -24,6 +24,9 @@ class Player(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
 
+    def __str__(self) -> str:
+        return self.name
+
 class Stats(models.Model):
     games = models.ManyToManyField(Game)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
@@ -40,3 +43,9 @@ class Stats(models.Model):
     field_goals_attempts = models.PositiveSmallIntegerField()
     field_goals_made = models.PositiveSmallIntegerField()
     field_goals_percent = models.FloatField()
+
+    @property
+    def game_stat(self) -> str:
+        print("AAAAAAAAAA")
+        game = self.games.filter(self.id)
+        return game.slug
