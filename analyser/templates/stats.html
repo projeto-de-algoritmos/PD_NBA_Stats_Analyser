@@ -69,6 +69,19 @@
         </nav>
         <div class="columns">
             <div class="column is-three-fifths is-offset-one-fifth">
+                <form method="get">
+                    <div class="column is-four-fifths">
+                        <div class="field is-grouped is-expanded">
+                            {{myFilter.form}}
+                            <p class="control">
+                                <button class="button is-link" type="submit">
+                                    Search
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                </form>
+
                 {% block table-wrapper %}
                 {% block table %}
                     <table {% render_attrs table.attrs class="table is-striped is-hoverable is-fullwidth" %}>

@@ -17,7 +17,11 @@ class Game(models.Model):
     date = models.DateField()
 
     def __str__(self) -> str:
-        return f'{self.home_team.name} VS {self.away_team.name}'
+        return f'{self.home_team.name} VS {self.away_team.name} - {self.date.strftime("%d/%m/%Y")}'
+
+    @property
+    def slug(self):
+        return f'{self.home_team.name} VS {self.away_team.name} - {self.date.strftime("%d/%m/%Y")}'
 
 class Player(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
@@ -44,7 +48,7 @@ class Stats(models.Model):
     field_goals_made = models.PositiveSmallIntegerField()
     field_goals_percent = models.FloatField()
 
-    @property
-    def game_stat(self) -> str:
-        game = self.games.filter(self.id)
-        return game.slug
+    #@property
+    #def game_stat(self) -> str:
+    #    game = self.games.filter(self.id)
+    #    return game.slug
