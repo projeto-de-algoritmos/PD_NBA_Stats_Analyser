@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_simple_bulma',
+    'django_tables2',
     'analyser',
 ]
 
@@ -123,7 +125,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_ROOT = f"{BASE_DIR}/static/"
+STATIC_URL = "/static/"
+
+STATICFILES_FINDERS = [
+  # First add the two default Finders, since this will overwrite the default.
+  'django.contrib.staticfiles.finders.FileSystemFinder',
+  'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+
+  # Now add our custom SimpleBulma one.
+  'django_simple_bulma.finders.SimpleBulmaFinder',
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

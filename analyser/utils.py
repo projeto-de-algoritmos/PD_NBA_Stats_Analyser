@@ -52,8 +52,6 @@ def get_games_data(games_df, games_details_df, season=2020):
         how='left'
     )
 
-    print(games_df.head())
-    print(games_details_df.head())
     # Filter relevant fields
     filtered_detailed_games = detailed_games[
         [
@@ -64,8 +62,6 @@ def get_games_data(games_df, games_details_df, season=2020):
     
     filtered_games_data = filtered_detailed_games.to_dict('records')
     for game in filtered_games_data:
-        print(game)
-        print("#"*30)
         try:
             home_team = Team.objects.get(
                 id=game['home_team_id']
