@@ -10,6 +10,11 @@ class Team(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    @property
+    def slug(self):
+        return self.name
+
+
 class Game(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='home_team')

@@ -1,6 +1,6 @@
 from django.http import HttpResponse
+from django.core.paginator import Paginator
 
-from django_tables2 import SingleTableView
 from django_tables2.views import SingleTableMixin
 from django_filters.views import FilterView
 
@@ -28,23 +28,50 @@ class StatsListView(SingleTableMixin, FilterView):
     paginate_by = 20
     table_class = StatsTable
     template_name = 'stats.html'
+    pagination_class = tables.paginators.LazyPaginator
+
 
     filterset_class = StatsFilter
+
+    def get_page_data(self, table, page_number=1):
+        current_page = table.paginate(
+            page=self.request.GET.get("page", page_number),
+            per_page=self.paginate_by
+        )
+        current_page_data = current_page.paginated_rows.data
+        return current_page_data
+
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         
-        stats = Stats.objects.all()[:20]
+        stats = Stats.objects.all()
 
         stats_filter = StatsFilter(self.request.GET, queryset=stats)
         has_filter = any(
             field in self.request.GET for field in set(stats_filter.get_fields())
         )
 
+        table = self.get_table(**self.get_table_kwargs())
+
+        current_page_data = self.get_page_data(table)
+        teams = {}
+        for i, data in enumerate(current_page_data):
+            if data.player.team.name in teams:
+                teams[data.player.team.name]["length"] += 1
+            else:
+                teams[data.player.team.name] = {
+                    "start": i,
+                    "length": 1
+                }
+
         context = {
             'stats_filter':stats_filter,
-            'has_filter': has_filter
+            'has_filter': has_filter,
+            'row_span_data': [
+                table.columns["player_team"],
+            ],
+            'teams': teams,
+            self.get_context_table_name(table): table
         }
-        table = self.get_table(**self.get_table_kwargs())
-        context[self.get_context_table_name(table)] = table
         return context
