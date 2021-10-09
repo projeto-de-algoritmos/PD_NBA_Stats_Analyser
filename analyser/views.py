@@ -14,16 +14,16 @@ def status(request):
 
 class StatsTable(tables.Table):
     games = tables.ManyToManyColumn(verbose_name="Game")
+    player_team = tables.Column(accessor="player.team", verbose_name="Player Team")
 
     class Meta:
         model = Stats
         template_name = "django_tables2/bulma.html"
         fields = (
-            "player", "games", "points", "rebounds", "assists", "blocks"
+            "player", "player_team", "games", "points", "rebounds", "assists", "blocks"
         )
-        row_attrs = {'td': {'class': "a"}}
 
-class PersonListView(SingleTableMixin, FilterView):
+class StatsListView(SingleTableMixin, FilterView):
     model = Stats
     paginate_by = 20
     table_class = StatsTable
@@ -36,9 +36,15 @@ class PersonListView(SingleTableMixin, FilterView):
         
         stats = Stats.objects.all()[:20]
 
-        myFilter = StatsFilter(self.request.GET, queryset=stats)
+        stats_filter = StatsFilter(self.request.GET, queryset=stats)
+        has_filter = any(
+            field in self.request.GET for field in set(stats_filter.get_fields())
+        )
 
-        context = {'myFilter':myFilter}
+        context = {
+            'stats_filter':stats_filter,
+            'has_filter': has_filter
+        }
         table = self.get_table(**self.get_table_kwargs())
         context[self.get_context_table_name(table)] = table
         return context

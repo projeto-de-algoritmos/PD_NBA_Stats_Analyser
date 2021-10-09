@@ -5,7 +5,21 @@
 
 {% load django_tables2 %}
 {% load bulma_template %}
+{% font_awesome %}
+
 <html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                $("button").click(function() {
+                    //$("#d").trigger("reset");
+                    //$("#d").get(0).reset();
+                    $("#d")[0].reset()
+                });
+            });
+        </script>
+    </head>
     <body>
         <nav class="navbar" role="navigation" aria-label="main navigation">
             <div class="navbar-brand">
@@ -69,19 +83,60 @@
         </nav>
         <div class="columns">
             <div class="column is-three-fifths is-offset-one-fifth">
-                <form method="get">
-                    <div class="column is-four-fifths">
-                        <div class="field is-grouped is-expanded">
-                            {{myFilter.form}}
-                            <p class="control">
-                                <button class="button is-link" type="submit">
-                                    Search
-                                </button>
+                <form id="searchForm" method="get">
+                    <div class="field is-horizontal">
+                        <div class="field-label is-normal">
+                          <label class="label">{{stats_filter.form.player__name.label}}</label>
+                        </div>
+                        <div class="field-body">
+                          <div class="field">
+                            <p class="control is-expanded has-icons-left">
+                              {{stats_filter.form.player__name}}
+                              <span class="icon is-small is-left">
+                                <i class="fas fa-basketball-ball"></i>
+                              </span>
                             </p>
+                          </div>
+                          <div class="field">
+                            <div class="control">
+                                <div class="select">
+                                    {{stats_filter.form.player__team}}
+                                </div>
+                                <p class="help">Player team</p>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+                    <div class="field is-horizontal">
+                        <div class="field-label is-normal">
+                          <label class="label">{{stats_filter.form.games__home_team.label}}</label>
+                        </div>
+                        <div class="field-body">
+                          <div class="field is-narrow">
+                            <div class="control">
+                              <div class="select">
+                                {{stats_filter.form.games__home_team}}
+                                <p class="help">Home team</p>
+                              </div>
+                              <div class="select">
+                                {{stats_filter.form.games__away_team}}
+                                <p class="help">Away team</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="buttons">
+                                <button class="button is-link" type="submit">
+                                    Pesquisar
+                                </button>
+                                {% if has_filter %}
+                                    <a class="button is-warning" href="{%  url 'home' %}">Limpar filtros</a>
+                                {% else %}
+                                    <input class="button is-warning" type="button" value="Limpar filtros" id="resetBtn" onClick="$('#searchForm').trigger('reset');">
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </form>
-
                 {% block table-wrapper %}
                 {% block table %}
                     <table {% render_attrs table.attrs class="table is-striped is-hoverable is-fullwidth" %}>
@@ -224,6 +279,5 @@
             {% endblock table-wrapper %}
             </div>
         </div>
-        
     </body>
 </html>
