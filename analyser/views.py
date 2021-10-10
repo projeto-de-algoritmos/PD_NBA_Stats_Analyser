@@ -1,5 +1,4 @@
 from django.http import HttpResponse
-from django.core.paginator import Paginator
 
 from django_tables2.views import SingleTableMixin
 from django_filters.views import FilterView
@@ -57,10 +56,20 @@ class StatsListView(SingleTableMixin, FilterView):
         current_page_data = self.get_page_data(table)
         teams = {}
         for i, data in enumerate(current_page_data):
+            player_team = data.player.team.name
+            game = data.games.all().first()
+
             if data.player.team.name in teams:
-                teams[data.player.team.name]["length"] += 1
+                teams[player_team]["length"] += 1
             else:
-                teams[data.player.team.name] = {
+                teams[player_team] = {
+                    "start": i,
+                    "length": 1
+                }
+            if game.slug in teams:
+                teams[game.slug]["length"] += 1
+            else:
+                teams[game.slug] = {
                     "start": i,
                     "length": 1
                 }
@@ -70,6 +79,7 @@ class StatsListView(SingleTableMixin, FilterView):
             'has_filter': has_filter,
             'row_span_data': [
                 table.columns["player_team"],
+                table.columns["games"]
             ],
             'teams': teams,
             self.get_context_table_name(table): table

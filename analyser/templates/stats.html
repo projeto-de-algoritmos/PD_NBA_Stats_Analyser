@@ -179,13 +179,23 @@
                                 {% for column, cell in row.items %}
                                     {% block table.tbody.td %}
                                         {% if column in row_span_data %}
-                                            {% with dict_value=teams|dict_key:cell.slug %}
-                                                {% if forloop.parentloop.counter0 == dict_value.start %}
-                                                    <td {{ column.attrs.td.as_html }} class="has-text-centered" style="vertical-align: middle;" rowspan="{{ dict_value.length }}">
-                                                        {% if column.localize == None %}{{ cell }}{% else %}{% if column.localize %}{{ cell|localize }}{% else %}{{ cell|unlocalize }}{% endif %}{% endif %}
-                                                    </td>
-                                                {% endif %}
-                                            {% endwith %}
+                                            {% if column.name == "games" %}
+                                                {% with dict_value=teams|dict_key:cell %}
+                                                    {% if forloop.parentloop.counter0 == dict_value.start %}
+                                                        <td {{ column.attrs.td.as_html }} class="has-text-centered" style="vertical-align: middle;" rowspan="{{ dict_value.length }}">
+                                                            {% if column.localize == None %}{{ cell }}{% else %}{% if column.localize %}{{ cell|localize }}{% else %}{{ cell|unlocalize }}{% endif %}{% endif %}
+                                                        </td>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% else %}
+                                                {% with dict_value=teams|dict_key:cell.slug %}
+                                                    {% if forloop.parentloop.counter0 == dict_value.start %}
+                                                        <td {{ column.attrs.td.as_html }} class="has-text-centered" style="vertical-align: middle;" rowspan="{{ dict_value.length }}">
+                                                            {% if column.localize == None %}{{ cell }}{% else %}{% if column.localize %}{{ cell|localize }}{% else %}{{ cell|unlocalize }}{% endif %}{% endif %}
+                                                        </td>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% endif %}
                                         {% else %}
                                             <td {{ column.attrs.td.as_html }}>{% if column.localize == None %}{{ cell }}{% else %}{% if column.localize %}{{ cell|localize }}{% else %}{{ cell|unlocalize }}{% endif %}{% endif %}</td>
                                         {% endif %}

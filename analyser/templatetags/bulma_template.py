@@ -9,10 +9,6 @@ def dict_key(d, k):
     '''Returns the given key from a dictionary.'''
     return d[k]
 
-@register.filter(name="subtract")
-def subtract(value, arg):
-    return value - arg
-
 @register.simple_tag()
 def is_descending(obj):
     if obj is not None:

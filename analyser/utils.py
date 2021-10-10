@@ -76,12 +76,23 @@ def get_games_data(games_df, games_details_df, season=2020):
             print('Dump the team data before running the game seed script')
             return
         else:
-            game_obj, _ = Game.objects.get_or_create(
-                id=game['game_id'],
-                date=timezone.datetime.strptime(game['game_date_est'], '%Y-%m-%d'),
-                home_team=home_team,
-                away_team=away_team
-            )
+            try:
+                game_obj, _ = Game.objects.get_or_create(
+                    id=game['game_id'],
+                    date=timezone.datetime.strptime(game['game_date_est'], '%Y-%m-%d'),
+                    home_team=home_team,
+                    away_team=away_team,
+                    slug=(
+                        f'{home_team.name} VS {away_team.name} - {timezone.datetime.strptime(game["game_date_est"], "%Y-%m-%d").strftime("%d/%m/%Y")}'
+                    )
+                )
+            except IntegrityError:
+                game_obj = Game.objects.get(
+                    id=game['game_id'],
+                    date=timezone.datetime.strptime(game['game_date_est'], '%Y-%m-%d'),
+                    home_team=home_team,
+                    away_team=away_team
+                )
             try:
                 player_obj, _ = Player.objects.get_or_create(
                     id=game["player_id"],

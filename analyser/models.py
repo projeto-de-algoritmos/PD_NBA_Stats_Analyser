@@ -19,13 +19,10 @@ class Game(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='home_team')
     away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='away_team')
+    slug = models.CharField(max_length=100)
     date = models.DateField()
 
     def __str__(self) -> str:
-        return f'{self.home_team.name} VS {self.away_team.name} - {self.date.strftime("%d/%m/%Y")}'
-
-    @property
-    def slug(self):
         return f'{self.home_team.name} VS {self.away_team.name} - {self.date.strftime("%d/%m/%Y")}'
 
 class Player(models.Model):
@@ -52,8 +49,3 @@ class Stats(models.Model):
     field_goals_attempts = models.PositiveSmallIntegerField()
     field_goals_made = models.PositiveSmallIntegerField()
     field_goals_percent = models.FloatField()
-
-    #@property
-    #def game_stat(self) -> str:
-    #    game = self.games.filter(self.id)
-    #    return game.slug
