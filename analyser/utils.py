@@ -25,7 +25,7 @@ def lower_column_names(df):
     df.rename(columns=lambda col_name: col_name.lower(), inplace=True)
     return df
 
-def test_get_table_data(player_id):
+def get_player_table_data(player_id):
     table_data = []
     player = Player.objects.get(pk=player_id)
     player_stats = player.stats_set.all().order_by('-id')

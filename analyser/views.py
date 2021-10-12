@@ -9,7 +9,7 @@ from django_tables2.config import RequestConfig
 
 
 from analyser.models import Stats
-from analyser.utils import test_get_table_data
+from analyser.utils import get_player_table_data
 from analyser.filters import StatsFilter
 
 
@@ -29,9 +29,8 @@ class SubSequenceTable(tables.Table):
 
 
 def status(request, pk):
-    player_table_data = test_get_table_data(pk)
+    player_table_data = get_player_table_data(pk)
     table = PlayerTable(data=player_table_data)
-    table.paginate(page=request.GET.get("page", 1), per_page=20)
 
     RequestConfig(request, paginate={"per_page":20}).configure(table)
 
