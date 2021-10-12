@@ -25,6 +25,26 @@ def lower_column_names(df):
     df.rename(columns=lambda col_name: col_name.lower(), inplace=True)
     return df
 
+def test_get_table_data(player_id):
+    table_data = []
+    player = Player.objects.get(pk=player_id)
+    player_stats = player.stats_set.all().order_by('-id')
+    for stat in player_stats:
+        game = stat.games.all().first()
+        table_data.append(
+            {
+                "player_name": player.name,
+                "player_team": player.team.name,
+                "game": game.slug,
+                "game_date": game.date,
+                "points": stat.points,
+                "rebounds": stat.rebounds,
+                "assists": stat.assists,
+                "blocks": stat.blocks,
+            }
+        )
+    return table_data
+
 def get_games_data(games_df, games_details_df, season=2020):
     # Filter games by season
     games_df = games_df.loc[games_df['season'] == season]

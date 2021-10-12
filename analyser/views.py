@@ -1,23 +1,82 @@
-from django.http import HttpResponse
+from django.shortcuts import render
 
 from django_tables2.views import SingleTableMixin
 from django_filters.views import FilterView
+from django_tables2.utils import A
 
 import django_tables2 as tables
+from django_tables2.config import RequestConfig
+
 
 from analyser.models import Stats
+from analyser.utils import test_get_table_data
 from analyser.filters import StatsFilter
 
-def status(request):
-    return HttpResponse('Hello world')
+
+class PlayerTable(tables.Table):
+    player_name = tables.Column()
+    player_team = tables.Column()
+    game = tables.Column()
+    game_date = tables.Column()
+    points = tables.Column()
+    rebounds = tables.Column()
+    assists = tables.Column()
+    blocks = tables.Column()
+
+class SubSequenceTable(tables.Table):
+    player_name = tables.Column()
+    subsequence = tables.Column()
+
+
+def status(request, pk):
+    player_table_data = test_get_table_data(pk)
+    table = PlayerTable(data=player_table_data)
+    table.paginate(page=request.GET.get("page", 1), per_page=20)
+
+    RequestConfig(request, paginate={"per_page":20}).configure(table)
+
+    current_page_data = table.paginated_rows.data
+    players = {}
+
+    for i, data in enumerate(current_page_data):
+        player_team = data["player_team"]
+        player_name = data["player_name"]
+
+        if player_team in players:
+            players[player_team]["length"] += 1
+        else:
+            players[player_team] = {
+                "start": i,
+                "length": 1
+            }
+
+        if player_name in players:
+            players[player_name]["length"] += 1
+        else:
+            players[player_name] = {
+                "start": i,
+                "length": 1
+            }
+
+    context = {
+        "table": table,
+        'row_span_data': [
+            table.columns["player_team"],
+            table.columns["player_name"]
+        ],
+        "players": players
+    }
+
+    return render(request, 'player.html', context)
+
 
 class StatsTable(tables.Table):
     games = tables.ManyToManyColumn(verbose_name="Game")
+    player = tables.LinkColumn("status", args=[A("player.id")])
     player_team = tables.Column(accessor="player.team", verbose_name="Player Team")
 
     class Meta:
         model = Stats
-        template_name = "django_tables2/bulma.html"
         fields = (
             "player", "player_team", "games", "points", "rebounds", "assists", "blocks"
         )
@@ -51,7 +110,7 @@ class StatsListView(SingleTableMixin, FilterView):
             field in self.request.GET for field in set(stats_filter.get_fields())
         )
 
-        table = self.get_table(**self.get_table_kwargs())
+        table = self.get_table(**self.get_table_kwargs(), orderable=False)
 
         current_page_data = self.get_page_data(table)
         teams = {}
