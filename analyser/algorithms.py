@@ -1,13 +1,25 @@
 from bisect import bisect_left
 
 def longest_subsequence(array: list):
-    subsequence = [array[0]]
+    points, game = array[0]
+    subsequence = [
+        (points, game,)
+    ]
 
-    for number in array:
-        insertion_position = bisect_left(subsequence, number)
+    for stat in array:
+        points, game = stat
+
+        insertion_position = bisect_left(
+            subsequence,
+            (points,)
+        )
         if insertion_position == len(subsequence):
-            subsequence.append(number)
-        elif subsequence[insertion_position] > number:
-            subsequence[insertion_position] = number
+            subsequence.append(
+                (points, game,)
+            )
+        elif subsequence[insertion_position][0] > points:
+            subsequence[insertion_position] = (
+                (points, game,)
+            )
 
     return subsequence

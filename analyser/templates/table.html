@@ -13,7 +13,13 @@
             {% block filters %}
             {% endblock filters %}
 
+            {% block content %}
+            {% endblock content %}
+
             {% block table-content %}
+                {% block table-title %}
+                {% endblock table-title %}
+
                 {% block table-wrapper %}
                     {% block table %}
                         <table {% render_attrs table.attrs class="table is-striped is-hoverable is-fullwidth" %}>

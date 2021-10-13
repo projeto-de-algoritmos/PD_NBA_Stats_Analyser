@@ -11,13 +11,14 @@ from django_tables2.config import RequestConfig
 from analyser.models import Stats
 from analyser.utils import get_player_table_data
 from analyser.filters import StatsFilter
+from analyser.algorithms import longest_subsequence
 
 
 class PlayerTable(tables.Table):
     player_name = tables.Column()
     player_team = tables.Column()
-    game = tables.Column()
-    game_date = tables.Column()
+    game = tables.Column(order_by=("game_date"))
+    game_date = tables.Column(visible=False)
     points = tables.Column()
     rebounds = tables.Column()
     assists = tables.Column()
@@ -28,13 +29,30 @@ class SubSequenceTable(tables.Table):
     subsequence = tables.Column()
 
 
-def status(request, pk):
-    player_table_data = get_player_table_data(pk)
+def player_stats(request, pk):
+    player_table_data, subsequence_data = get_player_table_data(pk)
     table = PlayerTable(data=player_table_data)
 
-    RequestConfig(request, paginate={"per_page":20}).configure(table)
+    RequestConfig(request, paginate={"per_page":10}).configure(table)
 
     current_page_data = table.paginated_rows.data
+    analysis_criteria = {
+        "points": {
+            "selected": False
+        },
+        "rebounds": {
+            "selected": False
+        },
+        "assists": {
+            "selected": False
+        },
+        "blocks": {
+            "selected": False
+        },
+    }
+    criteria = request.GET.get("criteria", "points")
+    analysis_criteria[criteria]["selected"] = True
+
     players = {}
 
     for i, data in enumerate(current_page_data):
@@ -63,15 +81,23 @@ def status(request, pk):
             table.columns["player_team"],
             table.columns["player_name"]
         ],
-        "players": players
+        "players": players,
+        "analysis_criteria": analysis_criteria,
+        "criteria": criteria,
+        "subsequence": longest_subsequence(subsequence_data[criteria]),
+        "player_name": subsequence_data["player_name"],
+        "player_id": pk,
     }
 
     return render(request, 'player.html', context)
 
 
+def home(request):
+    return render(request, 'home.html')
+
 class StatsTable(tables.Table):
     games = tables.ManyToManyColumn(verbose_name="Game")
-    player = tables.LinkColumn("status", args=[A("player.id")])
+    player = tables.LinkColumn("player_stats", args=[A("player.id")])
     player_team = tables.Column(accessor="player.team", verbose_name="Player Team")
 
     class Meta:

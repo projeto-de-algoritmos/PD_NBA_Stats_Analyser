@@ -28,6 +28,13 @@ def lower_column_names(df):
 def get_player_table_data(player_id):
     table_data = []
     player = Player.objects.get(pk=player_id)
+    subsequence_data = {
+        "player_name": player.name,
+        "points": [],
+        "rebounds": [],
+        "assists": [],
+        "blocks": []
+    }
     player_stats = player.stats_set.all().order_by('-id')
     for stat in player_stats:
         game = stat.games.all().first()
@@ -43,7 +50,23 @@ def get_player_table_data(player_id):
                 "blocks": stat.blocks,
             }
         )
-    return table_data
+
+        subsequence_data["points"].append(
+            (stat.points, game.slug,)
+        )
+        subsequence_data["rebounds"].append(
+            (stat.rebounds, game.slug,)
+            
+        )
+        subsequence_data["assists"].append(
+            (stat.assists, game.slug,)
+            
+        )
+        subsequence_data["blocks"].append(
+            (stat.blocks, game.slug,)
+        )
+
+    return table_data, subsequence_data
 
 def get_games_data(games_df, games_details_df, season=2020):
     # Filter games by season
