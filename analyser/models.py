@@ -1,5 +1,4 @@
 from django.db import models
-from django.db.models.fields import related
 
 # Create your models here.
 class Team(models.Model):
@@ -27,11 +26,16 @@ class Game(models.Model):
 
 class Player(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    teams = models.ManyToManyField(Team, through='Contract')
     name = models.CharField(max_length=100)
 
     def __str__(self) -> str:
         return self.name
+
+class Contract(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    date_signed = models.DateField()
 
 class Stats(models.Model):
     games = models.ManyToManyField(Game)

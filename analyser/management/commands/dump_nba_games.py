@@ -16,8 +16,6 @@ class Command(BaseCommand):
         games_details_csv_filename = 'games_details.csv'
         games_details_df = pd.read_csv(games_details_csv_filename)
         games_details_df = lower_column_names(games_details_df)
-        print(games_df.head())
-        print(games_details_df.head())
 
         parsed_games_data = parse_games_data(games_df, games_details_df)
         save_stats_to_db(parsed_games_data)

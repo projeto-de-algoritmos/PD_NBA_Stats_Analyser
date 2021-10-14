@@ -3,18 +3,8 @@ from django.db.utils import IntegrityError
 
 import pandas as pd
 
-from analyser.models import Game, Player, Stats, Team
+from analyser.models import Game, Player, Stats, Team, Contract
 
-
-def update_rowspan_dict(rowspan_dict, column, row):
-    """Helper to update rowspan dict avoiding KeyError"""
-    if column in rowspan_dict:
-        rowspan_dict[column]["length"] += 1
-    else:
-        rowspan_dict[column] = {
-            "start": row,
-            "length": 1
-        }
 
 def lower_column_names(df):
     """Lower all columns in a dataframe"""
@@ -37,11 +27,16 @@ def build_player_data(player_id):
     }
     player_stats = player.stats_set.all().order_by('-id')
     for stat in player_stats:
+        
+        player = stat.player
         game = stat.games.all().first()
+        home_team = player.teams.filter(id=game.home_team.id).first()
+        player_team = home_team.name if home_team else player.teams.filter(id=game.away_team.id).first().name
+
         table_data.append(
             {
                 "player_name": player.name,
-                "player_team": player.team.name,
+                "player_team": player_team,
                 "game": game.slug,
                 "game_date": game.date,
                 "points": stat.points,
@@ -88,7 +83,7 @@ def parse_games_data(games_df, games_details_df, season=2020):
     games details dataframe
     """
     # Filter games by season
-    games_df = games_df.loc[games_df['season'] == season][:10]
+    games_df = games_df.loc[games_df['season'] == season]
 
     # Get only unique games IDs
     unique_games_ids = games_df.game_id.unique()
@@ -196,19 +191,22 @@ def save_player_to_db(game, player_team):
     """
     Save player data to db
     """
+    player_obj, _ = Player.objects.get_or_create(
+        id=game["player_id"],
+        name=game["player_name"]
+    )
+    
     try:
-        print("#"*30)
-        print(game)
-        print("#"*30)
-        player_obj, _ = Player.objects.get_or_create(
-            id=game["player_id"],
+        Contract.objects.get(
             team=player_team,
-            name=game["player_name"]
+            player=player_obj,
         )
-    except IntegrityError:
-        # Player changed team, but we want to keep player associated to the latest team
-        player_obj = Player.objects.get(
-            id=game["player_id"],
-            name=game["player_name"]
+    except Contract.DoesNotExist:
+        Contract.objects.create(
+            team=player_team,
+            player=player_obj,
+            date_signed=timezone.datetime.strptime(game["game_date_est"], "%Y-%m-%d")
         )
+
+
     return player_obj
