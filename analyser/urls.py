@@ -6,4 +6,3 @@ urlpatterns = [
     path('', views.home, name="home"),
     path('stats/', views.StatsListView.as_view(), name="stats"),
 ]
-# Possible error migrating db https://stackoverflow.com/questions/40549437/django-migration-relation-does-not-exist

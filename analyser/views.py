@@ -9,7 +9,7 @@ from django_tables2.config import RequestConfig
 
 
 from analyser.models import Stats
-from analyser.utils import get_player_table_data
+from analyser.utils import build_player_data, update_rowspan_dict
 from analyser.filters import StatsFilter
 from analyser.algorithms import longest_subsequence
 
@@ -24,18 +24,26 @@ class PlayerTable(tables.Table):
     assists = tables.Column()
     blocks = tables.Column()
 
-class SubSequenceTable(tables.Table):
-    player_name = tables.Column()
-    subsequence = tables.Column()
+    def build_row_span_dict(self, table):
+        row_span_dict = {}
+        current_page_data = table.paginated_rows.data
+        for i, data in enumerate(current_page_data):
+            player_team = data["player_team"]
+            player_name = data["player_name"]
+
+            update_rowspan_dict(row_span_dict, player_team, i)
+            update_rowspan_dict(row_span_dict, player_name, i)
+
+        return row_span_dict
+
 
 
 def player_stats(request, pk):
-    player_table_data, subsequence_data = get_player_table_data(pk)
+    player_table_data, subsequence_data = build_player_data(pk)
     table = PlayerTable(data=player_table_data)
 
     RequestConfig(request, paginate={"per_page":10}).configure(table)
-
-    current_page_data = table.paginated_rows.data
+    
     analysis_criteria = {
         "points": {
             "selected": False
@@ -50,38 +58,19 @@ def player_stats(request, pk):
             "selected": False
         },
     }
+
     criteria = request.GET.get("criteria", "points")
     analysis_criteria[criteria]["selected"] = True
 
-    players = {}
-
-    for i, data in enumerate(current_page_data):
-        player_team = data["player_team"]
-        player_name = data["player_name"]
-
-        if player_team in players:
-            players[player_team]["length"] += 1
-        else:
-            players[player_team] = {
-                "start": i,
-                "length": 1
-            }
-
-        if player_name in players:
-            players[player_name]["length"] += 1
-        else:
-            players[player_name] = {
-                "start": i,
-                "length": 1
-            }
+    row_span_data = table.build_row_span_dict(table)
 
     context = {
         "table": table,
-        'row_span_data': [
+        'row_span_columns': [
             table.columns["player_team"],
             table.columns["player_name"]
         ],
-        "players": players,
+        "row_span_data": row_span_data,
         "analysis_criteria": analysis_criteria,
         "criteria": criteria,
         "subsequence": longest_subsequence(subsequence_data[criteria]),
@@ -112,60 +101,43 @@ class StatsListView(SingleTableMixin, FilterView):
     table_class = StatsTable
     template_name = 'stats.html'
     pagination_class = tables.paginators.LazyPaginator
-
-
     filterset_class = StatsFilter
 
-    def get_page_data(self, table, page_number=1):
-        current_page = table.paginate(
-            page=self.request.GET.get("page", page_number),
-            per_page=self.paginate_by
-        )
-        current_page_data = current_page.paginated_rows.data
-        return current_page_data
 
+    def build_row_span_dict(self, table):
+        row_span_dict = {}
+        current_page_data = table.paginated_rows.data
+        for i, data in enumerate(current_page_data):
+            player_team = data.player.team.name
+            update_rowspan_dict(row_span_dict, player_team, i)
+
+            game = data.games.all().first()
+            game_slug = game.slug
+            update_rowspan_dict(row_span_dict, game_slug, i)
+
+        return row_span_dict
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         
         stats = Stats.objects.all()
-
         stats_filter = StatsFilter(self.request.GET, queryset=stats)
+
         has_filter = any(
             field in self.request.GET for field in set(stats_filter.get_fields())
         )
 
         table = self.get_table(**self.get_table_kwargs(), orderable=False)
-
-        current_page_data = self.get_page_data(table)
-        teams = {}
-        for i, data in enumerate(current_page_data):
-            player_team = data.player.team.name
-            game = data.games.all().first()
-
-            if data.player.team.name in teams:
-                teams[player_team]["length"] += 1
-            else:
-                teams[player_team] = {
-                    "start": i,
-                    "length": 1
-                }
-            if game.slug in teams:
-                teams[game.slug]["length"] += 1
-            else:
-                teams[game.slug] = {
-                    "start": i,
-                    "length": 1
-                }
+        row_span_data = self.build_row_span_dict(table)
 
         context = {
             'stats_filter':stats_filter,
             'has_filter': has_filter,
-            'row_span_data': [
+            'row_span_columns': [
                 table.columns["player_team"],
                 table.columns["games"]
             ],
-            'teams': teams,
+            'row_span_data': row_span_data,
             self.get_context_table_name(table): table
         }
         return context

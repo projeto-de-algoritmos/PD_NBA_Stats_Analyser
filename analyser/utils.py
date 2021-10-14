@@ -6,26 +6,26 @@ import pandas as pd
 from analyser.models import Game, Player, Stats, Team
 
 
-def get_teams_data(teams_df):
-    """
-    """
-    teams_df['name'] = teams_df.apply(
-        lambda row: f"{row['city']} {row['nickname']}",
-        axis=1
-    )
-    teams_df = teams_df.rename(columns={'team_id': 'id'})
-    filtered_teams_df = teams_df[['name','id', 'abbreviation']]
-
-    teams_data = filtered_teams_df.to_dict('records')
-    return teams_data
+def update_rowspan_dict(rowspan_dict, column, row):
+    """Helper to update rowspan dict avoiding KeyError"""
+    if column in rowspan_dict:
+        rowspan_dict[column]["length"] += 1
+    else:
+        rowspan_dict[column] = {
+            "start": row,
+            "length": 1
+        }
 
 def lower_column_names(df):
-    """
-    """
+    """Lower all columns in a dataframe"""
     df.rename(columns=lambda col_name: col_name.lower(), inplace=True)
     return df
 
-def get_player_table_data(player_id):
+def build_player_data(player_id):
+    """
+    Build list of dict with player stats and 
+    list with stats separately
+    """
     table_data = []
     player = Player.objects.get(pk=player_id)
     subsequence_data = {
@@ -68,9 +68,27 @@ def get_player_table_data(player_id):
 
     return table_data, subsequence_data
 
-def get_games_data(games_df, games_details_df, season=2020):
+
+def parse_teams_data(teams_df):
+    """Parse teams data to a list of dicts using teams dataframe"""
+    teams_df['name'] = teams_df.apply(
+        lambda row: f"{row['city']} {row['nickname']}",
+        axis=1
+    )
+    teams_df = teams_df.rename(columns={'team_id': 'id'})
+    filtered_teams_df = teams_df[['name','id', 'abbreviation']]
+
+    teams_data = filtered_teams_df.to_dict('records')
+    return teams_data
+
+
+def parse_games_data(games_df, games_details_df, season=2020):
+    """
+    Parse games data to a list of dicts using games and
+    games details dataframe
+    """
     # Filter games by season
-    games_df = games_df.loc[games_df['season'] == season]
+    games_df = games_df.loc[games_df['season'] == season][:10]
 
     # Get only unique games IDs
     unique_games_ids = games_df.game_id.unique()
@@ -86,7 +104,8 @@ def get_games_data(games_df, games_details_df, season=2020):
         games_df,
         detailed_games[
             [
-                'game_id','player_id','player_name', 'team_id', 'pts', 'reb', 'ast', 'blk',
+                'game_id','player_id','player_name', 'team_id',
+                'pts', 'reb', 'ast', 'blk',
                 'fta', 'ftm', 'ft_pct',
                 'fga', 'fgm', 'fg_pct'
             ]
@@ -98,13 +117,23 @@ def get_games_data(games_df, games_details_df, season=2020):
     # Filter relevant fields
     filtered_detailed_games = detailed_games[
         [
-            'game_id', 'game_date_est', 'team_id', 'home_team_id', 'visitor_team_id', 'player_id', 'player_name',
-            'pts', 'reb', 'ast', 'blk', 'fta', 'ftm', 'ft_pct', 'fga', 'fgm', 'fg_pct'
+            'game_id', 'game_date_est', 'team_id', 'home_team_id',
+            'visitor_team_id', 'player_id', 'player_name',
+            'pts', 'reb', 'ast', 'blk', 'fta', 'ftm',
+            'ft_pct', 'fga', 'fgm', 'fg_pct'
         ]
     ]
-    
-    filtered_games_data = filtered_detailed_games.to_dict('records')
-    for game in filtered_games_data:
+    parsed_games_data = filtered_detailed_games.to_dict('records')
+
+    return parsed_games_data
+
+
+def save_stats_to_db(parsed_games_data):
+    """
+    Save stats to db after processing games,
+    games details and teams dataframes
+    """
+    for game in parsed_games_data:
         try:
             home_team = Team.objects.get(
                 id=game['home_team_id']
@@ -119,35 +148,8 @@ def get_games_data(games_df, games_details_df, season=2020):
             print('Dump the team data before running the game seed script')
             return
         else:
-            try:
-                game_obj, _ = Game.objects.get_or_create(
-                    id=game['game_id'],
-                    date=timezone.datetime.strptime(game['game_date_est'], '%Y-%m-%d'),
-                    home_team=home_team,
-                    away_team=away_team,
-                    slug=(
-                        f'{home_team.name} VS {away_team.name} - {timezone.datetime.strptime(game["game_date_est"], "%Y-%m-%d").strftime("%d/%m/%Y")}'
-                    )
-                )
-            except IntegrityError:
-                game_obj = Game.objects.get(
-                    id=game['game_id'],
-                    date=timezone.datetime.strptime(game['game_date_est'], '%Y-%m-%d'),
-                    home_team=home_team,
-                    away_team=away_team
-                )
-            try:
-                player_obj, _ = Player.objects.get_or_create(
-                    id=game["player_id"],
-                    team=player_team,
-                    name=game["player_name"]
-                )
-            except IntegrityError:
-                # Player changed team, but we want to keep player associated to the latest team
-                player_obj = Player.objects.get(
-                    id=game["player_id"],
-                    name=game["player_name"]
-                )
+            game_obj = save_game_to_db(game, home_team, away_team)
+            player_obj = save_player_to_db(game, player_team)
 
             stats = Stats.objects.create(
                 player=player_obj,
@@ -164,4 +166,49 @@ def get_games_data(games_df, games_details_df, season=2020):
             )
             stats.games.add(game_obj)
 
-    return filtered_detailed_games
+
+def save_game_to_db(game, home_team, away_team):
+    """
+    Save game data to db
+    """
+    try:
+        game_obj, _ = Game.objects.get_or_create(
+            id=game['game_id'],
+            date=timezone.datetime.strptime(game['game_date_est'], '%Y-%m-%d'),
+            home_team=home_team,
+            away_team=away_team,
+            slug=(
+                f'{home_team.name} VS {away_team.name} - '
+                f'{timezone.datetime.strptime(game["game_date_est"], "%Y-%m-%d").strftime("%d/%m/%Y")}'
+            )
+        )
+    except IntegrityError:
+        game_obj = Game.objects.get(
+            id=game['game_id'],
+            date=timezone.datetime.strptime(game['game_date_est'], '%Y-%m-%d'),
+            home_team=home_team,
+            away_team=away_team
+        )
+    return game_obj
+
+
+def save_player_to_db(game, player_team):
+    """
+    Save player data to db
+    """
+    try:
+        print("#"*30)
+        print(game)
+        print("#"*30)
+        player_obj, _ = Player.objects.get_or_create(
+            id=game["player_id"],
+            team=player_team,
+            name=game["player_name"]
+        )
+    except IntegrityError:
+        # Player changed team, but we want to keep player associated to the latest team
+        player_obj = Player.objects.get(
+            id=game["player_id"],
+            name=game["player_name"]
+        )
+    return player_obj

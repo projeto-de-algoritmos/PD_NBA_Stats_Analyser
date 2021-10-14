@@ -64,7 +64,7 @@
                         Pesquisar
                     </button>
                     {% if has_filter %}
-                        <a class="button is-warning" href="{%  url 'home' %}">Limpar filtros</a>
+                        <a class="button is-warning" href="{%  url 'stats' %}">Limpar filtros</a>
                     {% else %}
                         <input class="button is-warning" type="button" value="Limpar filtros" id="resetBtn" onClick="$('#searchForm').trigger('reset');">
                     {% endif %}
@@ -75,9 +75,9 @@
 {% endblock filters %}
 
 {% block table.tbody.td %}
-    {% if column in row_span_data %}
+    {% if column in row_span_columns %}
         {% if column.name == "games" %}
-            {% with dict_value=teams|dict_key:cell %}
+            {% with dict_value=row_span_data|dict_key:cell %}
                 {% if forloop.parentloop.counter0 == dict_value.start %}
                     <td {{ column.attrs.td.as_html }} class="has-text-centered" style="vertical-align: middle;" rowspan="{{ dict_value.length }}">
                         {% if column.localize == None %}{{ cell }}{% else %}{% if column.localize %}{{ cell|localize }}{% else %}{{ cell|unlocalize }}{% endif %}{% endif %}
@@ -85,7 +85,7 @@
                 {% endif %}
             {% endwith %}
         {% else %}
-            {% with dict_value=teams|dict_key:cell.slug %}
+            {% with dict_value=row_span_data|dict_key:cell.slug %}
                 {% if forloop.parentloop.counter0 == dict_value.start %}
                     <td {{ column.attrs.td.as_html }} class="has-text-centered" style="vertical-align: middle;" rowspan="{{ dict_value.length }}">
                         {% if column.localize == None %}{{ cell }}{% else %}{% if column.localize %}{{ cell|localize }}{% else %}{{ cell|unlocalize }}{% endif %}{% endif %}
