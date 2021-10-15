@@ -50,6 +50,11 @@ Realize as migrações do banco de dados com o seguinte comando:
 $ python manage.py migrate
 ```
 
+Colete os estáticos necessários com o comando abaixo:
+```sh
+$ python manage.py collectstatic --no-input
+```
+
 Para facilitar a primeira execução do projeto, foi adicionado o arquivo `dump.json` com um arquivo `json` para carregar as estatísticas da temporada 2020 da NBA. Para ter os dados serem adicionados a base de dados execute o seguinte:
 
 Carregando dados:
