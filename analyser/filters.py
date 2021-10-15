@@ -21,7 +21,7 @@ class StatsFilter(django_filters.FilterSet):
         lookup_expr='icontains',
         label='Player'
     )
-    player__team = django_filters.ChoiceFilter(
+    player__teams = django_filters.ChoiceFilter(
         choices=TEAMS_CHOICES,
     )
     games__home_team = django_filters.ChoiceFilter(
@@ -36,4 +36,4 @@ class StatsFilter(django_filters.FilterSet):
 
     class Meta:
         model = Stats
-        fields = ("player__name", "games__home_team", "games__away_team")
+        fields = ("player__name", "player__teams", "games__home_team", "games__away_team")
