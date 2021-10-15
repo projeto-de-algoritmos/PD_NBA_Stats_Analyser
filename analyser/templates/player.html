@@ -1,0 +1,59 @@
+{% extends "table.html" %}
+
+{% load django_tables2 %}
+{% load bulma_template %}
+
+{% block filters %}
+
+<div class="column is-half is-offset-one-quarter">
+    <div class="field is-horizontal">
+        <div class="field-label is-normal">
+          <label class="label">Critério de análise</label>
+        </div>
+        <div class="field-body">
+          <div class="field">
+              <p class="control buttons has-addons is-expanded">
+                {% for criteria in analysis_criteria %}
+                    {% with dict_value=analysis_criteria|dict_key:criteria %}
+                        {% if dict_value.selected %}
+                            <a class="button is-info is-selected">{{criteria}}</a>
+                        {% else %}
+                            <a class="button" href="{% url 'player_stats' player_id %}?criteria={{ criteria }}">{{criteria}}</a>
+                        {% endif %}
+                    {% endwith %}
+                {% endfor %}
+                </p>
+          </div>
+      </div>
+    </div>
+</div>
+  
+{% endblock filters %}
+
+{% block content %}
+<h1 class="title is-4">Maior Subsequência crescente</h1>
+<table class="table is-fullwidth">
+    <thead>
+        <tr>
+            <th class="has-text-centered">Player name</th>
+            <th class="has-text-centered">Subsequence</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="has-text-centered" style="vertical-align: middle;">{{player_name}}</td>
+            <td class="has-text-centered" style="vertical-align: middle;">
+                {% for sequence, game  in subsequence %}
+                    <ul>
+                        <li> <strong>{{ sequence }} {{ criteria }}</strong>: {{ game }}</li>
+                    </ul>
+                {% endfor %}
+            </td>
+        </tr>
+    </tbody>
+</table>
+{% endblock content %}
+
+{% block table-title%}
+    <h1 class="title is-4">Estatísticas jogador</h1>
+{% endblock table-title%}

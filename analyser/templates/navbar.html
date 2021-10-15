@@ -1,0 +1,23 @@
+{% load static %}
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+        <a class="navbar-item" href="{% url 'home' %}">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJQGWtvHd0l_yw4GQKV35EWef5UGywgds20jfcUtVuoJVVT2-irhc2Zy313CqjafNiyg&usqp=CAU" >
+        </a>
+    
+        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        </a>
+    </div>
+    
+    <div id="navbarBasicExample" class="navbar-menu">
+        <div class="navbar-start">
+            <a class="navbar-item" href="{% url 'stats' %}">
+                Estatísticas gerais
+            </a>
+        </div>
+    </div>
+</nav>

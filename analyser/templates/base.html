@@ -1,0 +1,17 @@
+{% load static %}
+
+{% load django_simple_bulma %}
+{% bulma %}
+{% font_awesome %}
+
+<html>
+    {% block head %}
+    {% endblock %}
+    
+    <body>
+        {% include "navbar.html" %}
+        {% block body %}
+        {% endblock body %}
+    </body>
+    
+</html>

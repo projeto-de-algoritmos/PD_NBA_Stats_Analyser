@@ -1,0 +1,75 @@
+{% extends "table.html" %}
+
+
+{% load django_tables2 %}
+{% load bulma_template %}
+
+{% block head%}
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                $("button").click(function() {
+                    $("#d")[0].reset()
+                });
+            });
+        </script>
+    </head>
+{% endblock %}
+
+{% block filters %}
+    <form id="searchForm" method="get">
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+            <label class="label">{{stats_filter.form.player__name.label}}</label>
+            </div>
+            <div class="field-body">
+            <div class="field">
+                <p class="control is-expanded has-icons-left">
+                {{stats_filter.form.player__name}}
+                <span class="icon is-small is-left">
+                    <i class="fas fa-basketball-ball"></i>
+                </span>
+                </p>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <div class="select">
+                        {{stats_filter.form.player__team}}
+                    </div>
+                    <p class="help">Player team</p>
+                </div>
+            </div>
+            </div>
+        </div>
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+            <label class="label">{{stats_filter.form.games__home_team.label}}</label>
+            </div>
+            <div class="field-body">
+            <div class="field is-narrow">
+                <div class="control">
+                <div class="select">
+                    {{stats_filter.form.games__home_team}}
+                    <p class="help">Home team</p>
+                </div>
+                <div class="select">
+                    {{stats_filter.form.games__away_team}}
+                    <p class="help">Away team</p>
+                </div>
+                </div>
+            </div>
+            <div class="buttons">
+                    <button class="button is-link" type="submit">
+                        Pesquisar
+                    </button>
+                    {% if has_filter %}
+                        <a class="button is-warning" href="{%  url 'stats' %}">Limpar filtros</a>
+                    {% else %}
+                        <input class="button is-warning" type="button" value="Limpar filtros" id="resetBtn" onClick="$('#searchForm').trigger('reset');">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock filters %}
